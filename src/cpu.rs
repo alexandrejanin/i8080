@@ -30,24 +30,23 @@ pub trait Machine {
 impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "{:>4} {:>4} {:>4} {:>4} {:>4} {:>4} {:>4}",
-                    "a",   "bc", "de", "hl", "pc", "sp", "flags")?;
+                 "a", "bc", "de", "hl", "pc", "sp", "flags")?;
 
         write!(f,
-                 "{:04x} {:02x}{:02x} {:02x}{:02x} {:02x}{:02x} {:04x} {:04x} {:?}",
-                 *self.a,
-                 *self.b, *self.c,
-                 *self.d, *self.e,
-                 *self.h, *self.l,
-                 *self.pc,
-                 *self.sp,
-                 self.conditions,
-       )
+               "{:04x} {:02x}{:02x} {:02x}{:02x} {:02x}{:02x} {:04x} {:04x} {:?}",
+               *self.a,
+               *self.b, *self.c,
+               *self.d, *self.e,
+               *self.h, *self.l,
+               *self.pc,
+               *self.sp,
+               self.conditions,
+        )
     }
 }
 
 // HELP GROUP
 impl Cpu {
-
     pub fn new() -> Self {
         Self::default()
     }
@@ -178,7 +177,6 @@ impl Cpu {
             code => {
                 panic!("Unimplemented INSTRUCTION {:?}", Opcode::from(code));
             }
-
         }
 
         if !jumped {
@@ -213,22 +211,19 @@ impl Cpu {
         if opcode.size() == 1 {
             println!("{:04x} {:?}", *pc, opcode);
         } else if opcode.size() == 2 {
-            println!("{:04x} {:?} {:02x}", *pc, opcode, self.memory[pc+1]);
+            println!("{:04x} {:?} {:02x}", *pc, opcode, self.memory[pc + 1]);
         } else {
             println!("{:04x} {:?} {:02x}{:02x}",
                      *pc,
                      opcode,
-                     self.memory[pc+2],
-                     self.memory[pc+1]);
+                     self.memory[pc + 2],
+                     self.memory[pc + 1]);
         }
-
     }
-
 }
 
 // DATA TRANSFER GROUP
 impl Cpu {
-
     fn mov(&mut self, code: u8) {
         macro_rules! mov {
             ($set:ident ,
@@ -438,7 +433,6 @@ macro_rules! update_pair {
 
 // ARITHMETIC GROUP
 impl Cpu {
-
     fn add(&mut self, code: u8) {
         let rhs = get_adrs!(self, code, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87);
         let lhs = self.a;
@@ -476,7 +470,6 @@ impl Cpu {
 
         self.conditions.set_all(answer, (lhs as u8 & 0xf).wrapping_add(rhs as u8 & 0xf));
         self.a = answer.into();
-
     }
 
     fn cmp(&mut self, code: u8) {
@@ -527,7 +520,6 @@ impl Cpu {
     }
 
     fn inr(&mut self, code: u8) {
-
         match code {
             0x04 => update_address!(self.b += 1),
             0x0c => update_address!(self.c += 1),
@@ -547,7 +539,6 @@ impl Cpu {
     }
 
     fn dcr(&mut self, code: u8) {
-
         match code {
             0x05 => update_address!(self.b -= 1),
             0x0d => update_address!(self.c -= 1),
@@ -1030,7 +1021,6 @@ impl Cpu {
 
 // IO GROUP
 impl Cpu {
-
     fn rst(&mut self, code: u8) -> bool {
         let ret = self.pc;
         self.memory.write(self.sp - 1, (ret >> 8));
@@ -1041,8 +1031,10 @@ impl Cpu {
     }
 
     pub fn interrupt(&mut self, code: u8) {
-        self.rst(code);
-        self.int_enable = false;
+        if self.int_enable {
+            self.rst(code);
+            self.int_enable = false;
+        }
     }
 
     fn push(&mut self, code: u8) {
@@ -1091,10 +1083,11 @@ impl Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     struct Facade;
 
     impl Machine for Facade {
-        fn input(&mut self, _: u8) -> u8 {0}
+        fn input(&mut self, _: u8) -> u8 { 0 }
 
         fn output(&mut self, _: u8, _: u8) {}
     }
@@ -1154,7 +1147,6 @@ mod tests {
 
         assert!(cpu.conditions.ac);
         assert!(cpu.conditions.cy);
-
     }
 
     #[test]
@@ -1168,7 +1160,6 @@ mod tests {
 
         assert_eq!(cpu.a, 0x6a);
         assert!(cpu.conditions.cy);
-
     }
 
     #[test]
@@ -1230,5 +1221,4 @@ mod tests {
         push_pop!(h l, 0xe5, 0xe1);
         push_pop!(a conditions, 0xf5, 0xf1);
     }
-
 }
